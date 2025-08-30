@@ -1,0 +1,13 @@
+*.pyc
+*.pyo
+
+.idea/
+.DS_Store
+/.Python
+
+../app/.env
+dumps/
+*.log
+.vscode/settings.json
+.env
+*data
