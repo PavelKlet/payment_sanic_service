@@ -1,23 +1,19 @@
 from sanic import Sanic
 from sanic.response import json
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from config import settings
 from uow import UnitOfWork
 
 from routers.auth import bp as auth_bp
 from routers.user import bp as user_bp
 from routers.admin import bp as admin_bp
 from routers.webhook import bp as webhook_bp
-
-engine = create_async_engine(settings.DATABASE_URL, future=True, echo=False)
-session_factory = async_sessionmaker(engine, expire_on_commit=False)
+from db import async_session_maker
 
 app = Sanic("payments_app")
 
 
 @app.middleware("request")
 async def inject_uow(request):
-    request.ctx.uow = UnitOfWork(session_factory)
+    request.ctx.uow = UnitOfWork(async_session_maker)
 
 
 @app.middleware("response")
