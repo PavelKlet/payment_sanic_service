@@ -1,5 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
+
 from models.account import Account
 
 
@@ -65,6 +67,19 @@ class AccountRepo:
         self.session.add(acc)
         await self.session.flush()
         return acc
+
+    async def create_if_not_exists(self, user_id: int, account_id: int | None = None) -> Account:
+        stmt = insert(Account).values(
+            id=account_id,
+            user_id=user_id
+        ).on_conflict_do_nothing(
+            index_elements=['id']
+        )
+
+        await self.session.execute(stmt)
+        account = await self.get_account_for_update(account_id)
+        return account
+
 
     async def update_balance(self, account: Account, new_balance) -> None:
         """

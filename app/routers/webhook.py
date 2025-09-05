@@ -43,24 +43,10 @@ async def payment_webhook(request):
     async with request.ctx.uow:
         svc = PaymentService(request.ctx.uow)
         try:
-            payment = await svc.process_webhook(data.model_dump())
+            result, status = await svc.process_webhook(data.model_dump())
         except ValueError:
             return response.json({"message": "invalid signature"}, status=400)
         except LookupError:
             return response.json({"message": "user not found"}, status=404)
 
-        if payment is None:
-            return response.json({"message": "duplicate transaction"}, status=200)
-
-        return response.json(
-            PaymentOut.model_validate(
-                {
-                    "id": payment.id,
-                    "transaction_id": payment.transaction_id,
-                    "user_id": payment.user_id,
-                    "account_id": payment.account_id,
-                    "amount": float(payment.amount),
-                }
-            ).model_dump(),
-            status=201,
-        )
+        return response.json(result, status=status)

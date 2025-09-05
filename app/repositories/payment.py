@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from models.payment import Payment
 
 
@@ -15,29 +18,20 @@ class PaymentRepo:
         self.session = session
 
     async def create(
-        self, transaction_id: str, user_id: int, account_id: int, amount
-    ) -> Payment:
-        """
-        Creates a new payment record in the database.
-
-        Args:
-            transaction_id (str): Unique identifier for the transaction.
-            user_id (int): ID of the user making the payment.
-            account_id (int): ID of the account associated with the payment.
-            amount (decimal.Decimal | float): Amount of the payment.
-
-        Returns:
-            Payment: The newly created Payment instance.
-        """
-        p = Payment(
+            self, transaction_id: str, user_id: int, account_id: int, amount
+    ) -> Payment | None:
+        stmt = insert(Payment).values(
             transaction_id=transaction_id,
             user_id=user_id,
             account_id=account_id,
-            amount=amount,
-        )
-        self.session.add(p)
-        await self.session.flush()
-        return p
+            amount=Decimal(str(amount))
+        ).on_conflict_do_nothing(
+            index_elements=['transaction_id']
+        ).returning(Payment)
+
+        result = await self.session.execute(stmt)
+        payment = result.scalar_one_or_none()
+        return payment
 
     async def list_by_user(self, user_id: int) -> list[Payment]:
         """
