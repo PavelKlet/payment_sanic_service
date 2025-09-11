@@ -23,8 +23,7 @@ class PaymentService:
         self.uow.set_repository("payment", PaymentRepo)
 
     async def process_webhook(self, data: dict):
-
-        existing_payment = await self.uow.payment.get_by_transaction_id(data["transaction_id"])
+        existing_payment = await self.uow.payment.exists_transaction(data["transaction_id"])
         if existing_payment:
             return {
                 "message": "duplicate transaction"

@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from sqlalchemy.dialects.postgresql import insert
 from models.payment import Payment
 
@@ -48,7 +48,7 @@ class PaymentRepo:
         )
         return q.scalars().all()
 
-    async def get_by_transaction_id(self, transaction_id: str) -> Payment | None:
-        stmt = select(Payment).where(Payment.transaction_id == transaction_id)
+    async def exists_transaction(self, transaction_id: str) -> bool:
+        stmt = select(exists().where(Payment.transaction_id == transaction_id))
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.scalar()
