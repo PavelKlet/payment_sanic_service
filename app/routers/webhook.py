@@ -1,7 +1,6 @@
 from sanic import Blueprint, response
 from schemas.payment import WebhookIn
 from services.payment import PaymentService
-from schemas.payment import PaymentOut
 
 bp = Blueprint("webhook", url_prefix="/webhooks")
 
