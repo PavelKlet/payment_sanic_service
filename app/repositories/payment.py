@@ -17,7 +17,7 @@ class PaymentRepo:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(
+    async def create_if_not_exists(
             self, transaction_id: str, user_id: int, account_id: int, amount
     ) -> Payment | None:
         stmt = insert(Payment).values(
@@ -47,3 +47,8 @@ class PaymentRepo:
             select(Payment).where(Payment.user_id == user_id)
         )
         return q.scalars().all()
+
+    async def get_by_transaction_id(self, transaction_id: str) -> Payment | None:
+        stmt = select(Payment).where(Payment.transaction_id == transaction_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

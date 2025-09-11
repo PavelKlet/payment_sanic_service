@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, ForeignKey, Numeric
+from sqlalchemy import Integer, ForeignKey, Numeric, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
@@ -17,4 +17,7 @@ class Account(Base):
     user = relationship("User", back_populates="accounts")
     payments = relationship(
         "Payment", back_populates="account", cascade="all, delete-orphan"
+    )
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )

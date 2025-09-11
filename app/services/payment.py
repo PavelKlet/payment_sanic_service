@@ -23,6 +23,13 @@ class PaymentService:
         self.uow.set_repository("payment", PaymentRepo)
 
     async def process_webhook(self, data: dict):
+
+        existing_payment = await self.uow.payment.get_by_transaction_id(data["transaction_id"])
+        if existing_payment:
+            return {
+                "message": "duplicate transaction"
+            }, 200
+
         expected = compute_signature(
             account_id=data["account_id"],
             amount=data["amount"],
@@ -36,13 +43,15 @@ class PaymentService:
         if not user:
             raise LookupError("user_not_found")
 
+
         account = await self.uow.account.get_account_for_update(data["account_id"])
         if not account:
-            account = await self.uow.account.create_if_not_exists(
-                user_id=user.id, account_id=data["account_id"]
+            account = await self.uow.account.create_or_update(
+                user_id=user.id,
+                account_id=data["account_id"]
             )
 
-        payment = await self.uow.payment.create(
+        payment = await self.uow.payment.create_if_not_exists(
             transaction_id=data["transaction_id"],
             user_id=user.id,
             account_id=account.id,
